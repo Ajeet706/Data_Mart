@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Station</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Available Queries for Download</h1>
+        <table class="table mt-4">
+            <thead>
+                <tr>
+                    <th>Query Name</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for query in queries %}
+                <tr>
+                    <td>{{ query.name }}</td>
+                    <td>
+                        {% if query.Add_filter %}
+                        <!-- Add Filters Button -->
+                        <button class="btn btn-primary" data-toggle="modal" data-target="#formatdownloadModal">Add Filters</button>
+                        {% else %}
+                        <!-- Download Button -->
+                        <button class="btn btn-primary" onclick="openDownloadModal({{ query.id }})" > Download </button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="2">No queries available for download.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Download Modal -->
+    <div class="modal fade" id="downloadModal" tabindex="-1" aria-labelledby="downloadModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="label">Download Confirmation</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    Click the button below to download the file.
+                </div>
+                <div class="modal-footer">
+                    <a id="downloadButton" href="#" class="btn btn-primary"  onclick="showMessage()">Download</a>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!--    Download after show message to wait-->
+<div class="modal fade" id="MessagedownloadModal" tabindex="-1" aria-labelledby="downloadModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" >Message</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                                <p>Your Download Ready.</p>
+                            </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        </div>
+                </div>
+            </div>
+        </div>
+
+
+     <!-- First Modal Popup for Download Format -->
+    <div class="modal fade" id="formatdownloadModal" tabindex="-1" aria-labelledby="downloadModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form id="formatdownloadModalForm" action="{% url 'download_excel' %}" method="get" enctype="multipart/form-data">
+                {% csrf_token %}
+                    <div class="modal-header">
+                    <h5 class="modal-title" id="formatmodellabel">Download Format File</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>format ready Click button to Download</p>
+                </div>
+                <div class="modal-footer">
+                    <a id="downloadFormat" href="{% url 'download_excel' %}" class="btn btn-primary"  onclick="DownloadFormat()">Download</a>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+                    </form>
+            </div>
+
+        </div>
+    </div>
+
+
+     <!-- Second Modal Popup for Upload Format -->
+    <div class="modal fade" id="formatuploadModal" role="dialog" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form id="formatuploadModalForm" action="{% url 'download_excel' %}" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                    <div class="modal-header">
+                    <h5 class="modal-title" id="uploadmodellabel">Upload Format File</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="excelFile">Upload Excel File</label>
+                        <input type="file" name="excel_file" id="excelFile" class="from-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary"  onclick="uploadMessage()">Upload</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+                    </form>
+            </div>
+        </div>
+    </div>
+
+    <!--    Upload after show message to wait-->
+<div class="modal fade" id="MessagewaitModal" tabindex="-1" aria-labelledby="downloadModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" >Message</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                                <p>Your Download Ready.</p>
+                            </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        </div>
+                </div>
+            </div>
+        </div>
+
+
+
+            <script>
+                function openDownloadModal(queryId) {
+                    // Set the download URL dynamically
+                    const downloadUrl = "{% url 'download_query' 0 %}".replace("0", queryId);
+                    document.getElementById('downloadButton').href = downloadUrl;
+                    // Show the download modal
+                    $('#downloadModal').modal('show');
+                }
+        
+                function showMessage() {
+                    var formData = document.getElementById("downloadModal");
+                    $.ajax({
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function(response) {
+                            // Close the filter modal
+                            $('#downloadModal').modal('hide');
+                            // Open the download modal
+                            $('#MessagedownloadModal').modal('show');
+                        },
+                        error: function(xhr, status, error) {
+                            alert("An error occurred: " + error);
+                        }
+                    });
+                }
+
+                function DownloadFormat() {
+                    var formData = document.getElementById("formatdownloadModalForm");
+                    $.ajax({
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function(response) {
+                            // Close the filter modal
+                            $('#formatdownloadModal').modal('hide');
+                            // Open the download modal
+                            $('#formatuploadModal').modal('show');
+                        },
+                        error: function(xhr, status, error) {
+                            alert("An error occurred: " + error);
+                        }
+                    });
+                }
+
+                function uploadMessage() {
+                    var formData = new FormData(document.getElementById("formatuploadModalForm"));
+                    $.ajax({
+                        url:"{% url 'download_excel' %}",
+                        type:"POST",
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function(response) {
+                            // Close the filter modal
+                            $('#formatuploadModal').modal('hide');
+                            // Open the download modal
+                            $('#MessagewaitModal').modal('show');
+                            $('#downloadLink').attr('href',response.download_url);
+                        },
+                        error: function(xhr, status, error) {
+                            alert("An error occurred: " + error);
+                        }
+                    });
+                }
+            </script>
+</body>
+</html>

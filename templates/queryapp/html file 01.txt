@@ -1,0 +1,397 @@
+<!-- templates/queryapp/query_list.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DataMart - Download Queries with Filters</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Available Queries for Download</h1>
+                <!-- Query List Table -->
+                <table class="table mt-4">
+                    <thead>
+                        <tr>
+                            <th>Query Name</th>
+                            {% comment %} <th>Description</th> {% endcomment %}
+                            {% comment %} <th>Download</th> {% endcomment %}
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for query in queries %}
+                        <tr>
+                            <td>{{ query.name }}</td>
+                            {% comment %} <td>{{ query.description }}</td> {% endcomment %}
+                            {% comment %} <td><a href="{% url 'download_query' query.id %}">Download Excel</a></td> {% endcomment %}
+                            {% if query.Add_filter %}
+                                     <td> <button class="btn btn-primary" data-toggle="modal" data-target="#filterModal">Add Filters</button>
+                                <!-- First Modal Popup for Filter Options -->
+                                <div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog" role="document">
+                                        <div class="modal-content">
+                                            <form id="filterForm" action="{% url 'apply_filters' %}" method="post" enctype="multipart/form-data">
+                                                {% csrf_token %}
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="filterModalLabel">Apply Filters</h5>
+                                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                        <span aria-hidden="true">&times;</span>
+                                                    </button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <div class="form-group">
+                                                        <label for="excelFile">Upload Excel File:</label>
+                                                        <input type="file" name="excel_file" id="excelFile" class="form-control" required>
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label for="startDate">Start Date:</label>
+                                                        <input type="date" name="start_date" id="startDate" class="form-control">
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label for="endDate">End Date:</label>
+                                                        <input type="date" name="end_date" id="endDate" class="form-control">
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label for="columnFilter">Column Filter:</label>
+                                                        <input type="text" name="column_filter" id="columnFilter" class="form-control" placeholder="Column name or value">
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-primary" onclick="applyFilters()">Apply Filters</button>
+                                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                        
+                                <!-- Second Modal Popup for Confirmation and Download -->
+                                <div class="modal fade" id="downloadModal" tabindex="-1" role="dialog" aria-labelledby="downloadModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog" role="document">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="downloadModalLabel">Filters Applied</h5>
+                                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>Your filters have been applied successfully. Click the button below to download the file.</p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <a href="#" id="downloadLink" class="btn btn-primary">Download</a>
+                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            
+                         </td>
+                            {% else %}
+                            <td> <button class="btn btn-primary" onclick="openDownloadModal({{ query.id }})">Download</button>
+                                
+                                <div class="modal fade" id="downloadModal" tabindex="-1" role="dialog" aria-labelledby="downloadModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog" role="document">
+                                      <div class="modal-content">
+                                        <div class="modal-header">
+                                          <h5 class="modal-title" id="downloadModalLabel">Download Confirmation</h5>
+                                          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                          </button>
+                                        </div>
+                                        <div class="modal-body">
+                                          Click the button below to download the file.
+                                        </div>
+                                        <div class="modal-footer">
+                                          <a id="downloadButton" href="#" class="btn btn-primary">Download</a>
+                                          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                
+                            
+                         </td>
+                            {% endif %}
+
+                           
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3">No queries available for download.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+    <script>    
+        function applyFilters() {
+            // Submit the form via AJAX
+            var formData = new FormData(document.getElementById("filterForm"));
+
+            $.ajax({
+                url: "{% url 'apply_filters' %}",
+                type: "POST",
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    // Close the filter modal
+                    $('#filterModal').modal('hide');
+                    // Open the download modal
+                    $('#downloadModal').modal('show');
+                    // Set the download link to the generated file URL
+                    $('#downloadLink').attr('href', response.download_url);
+                },
+                error: function(xhr, status, error) {
+                    alert("An error occurred: " + error);
+                }
+            });
+        }
+    </script>
+     <!-- JavaScript to handle modal and download link -->
+     <script>
+        function openDownloadModal(queryId) {
+            // Set the download URL for the button in the modal
+            document.getElementById('downloadButton').href = "{% url 'download_query' 0 %}".replace("0", queryId);
+            // Show the modal
+            $('#downloadModal').modal('show');
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataMart - Download Queries with Filters</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Available Queries for Download</h1>
+        <table class="table mt-4">
+            <thead>
+                <tr>
+                    <th>Query Name</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for query in queries %}
+                <tr>
+                    <td>{{ query.name }}</td>
+                    <td>
+                        {% if query.Add_filter %}
+                        <!-- Add Filters Button -->
+                        <button class="btn btn-primary" onclick="openFilterModal({{ query.id }})">Add Filters</button>
+                        {% else %}
+                        <!-- Download Button -->
+                        <button class="btn btn-primary" onclick="openDownloadModal({{ query.id }})">Download</button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="2">No queries available for download.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Filter Modal -->
+    <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="filterForm" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="filterModalLabel">Apply Filters</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="query_id" name="query_id">
+                        <div class="form-group">
+                            <label for="excelFile">Upload Excel File:</label>
+                            <input type="file" id="excelFile" name="excel_file" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" onclick="applyFilters()">Apply Filters</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Download Modal -->
+    <div class="modal fade" id="downloadModal" tabindex="-1" aria-labelledby="downloadModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="downloadModalLabel">Download Confirmation</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    Click the button below to download the file.
+                </div>
+                <div class="modal-footer">
+                    <a id="downloadButton" href="#" class="btn btn-primary">Download</a>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openFilterModal(queryId) {
+            // Set the query ID in the hidden input field
+            document.getElementById('query_id').value = queryId;
+            // Show the filter modal
+            $('#filterModal').modal('show');
+        }
+
+        function applyFilters() {
+            const formData = new FormData(document.getElementById('filterForm'));
+        
+            console.log("Form Data:", formData.get("excel_file"));  // Log uploaded file
+            console.log("Query ID:", formData.get("query_id"));     // Log query ID
+        
+            fetch("{% url 'apply_filters' %}", {
+                method: "POST",
+                body: formData,
+                headers: {
+                    "X-CSRFToken": getCookie("csrftoken") // Include CSRF token
+                }
+            })
+            .then(response => {
+                console.log("Response Status:", response.status);  // Log HTTP status
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error("Error while applying filters.");
+            })
+            .then(data => {
+                console.log("Response Data:", data);  // Log the response data
+                $('#filterModal').modal('hide');
+                $('#downloadModal').modal('show');
+                document.getElementById('downloadButton').href = data.download_url;
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("An error occurred while applying filters.");
+            });
+        }
+        
+
+        function openDownloadModal(queryId) {
+            // Set the download URL dynamically
+            const downloadUrl = "{% url 'download_query' 0 %}".replace("0", queryId);
+            document.getElementById('downloadButton').href = downloadUrl;
+            // Show the download modal
+            $('#downloadModal').modal('show');
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.startsWith(name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+<div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <form action="{% url 'apply_lookup' %}" method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="filterModalLabel">Apply Filters</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label for="excelFile">Upload Excel File:</label>
+                                <input type="file" name="excel_file" id="excelFile" class="form-control">
+                            </div>
+                  </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary">Upload</button>
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
