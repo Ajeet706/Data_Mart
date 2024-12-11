@@ -1,6 +1,7 @@
 # queryapp/views.py
 import pandas as pd
 from django.http import JsonResponse, HttpResponse
+from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from .models import SQLQuery
 import cx_Oracle
@@ -14,11 +15,17 @@ from openpyxl.styles import Font
 from io import BytesIO
 import os
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required, permission_required
 
+
+@login_required
+@permission_required('queryapp.view_sqlquery', raise_exception=True)
 def query_list(request):
     queries = SQLQuery.objects.all()
     return render(request, 'queryapp/query_list.html', {'queries': queries})
 
+@login_required
+@permission_required('queryapp.download_sqlquery', raise_exception=True)
 @csrf_exempt
 def execute_query_and_download(request, query_id):
     # Fetch the SQLQuery object from the database
@@ -133,7 +140,7 @@ def upload_excel(request):
         if errors:
             return JsonResponse({"success":False,"errors":errors},status=400)
 
-        download_url = '/path/to/download/file'
+        download_url = f'/queryapp/download/{query_id}/'
         return JsonResponse({
             "success":True,
             "message":"File validated and uploaded successfully",
@@ -143,3 +150,9 @@ def upload_excel(request):
         })
 
     return JsonResponse({"success":False,"errors":["Invalid request menhod"]},status=400)
+
+def view_page(request):
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT name, position, office, age, start_date, salary, extra FROM employe_01")
+        employees = cursor.fetchall()  # Fetches all rows
+    return render(request, 'queryapp/test.html', {'employees': employees})

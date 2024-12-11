@@ -27,6 +27,12 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+# Redirect after login
+LOGIN_REDIRECT_URL = '/queryapp/'  # Redirect to home page after login
+
+# Redirect after logout
+LOGOUT_REDIRECT_URL = '/login/'  # Redirect to home page after logout
+
 
 # Application definition
 
@@ -117,9 +123,13 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+STATICFILES_DIRS = [
+    BASE_DIR ,"static"
+]

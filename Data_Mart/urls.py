@@ -16,9 +16,15 @@ Including another URLconf
 """
 # datamart/urls.py or Data_Mart/urls.py
 from django.contrib import admin
+from django.contrib.auth import views as auth_views
 from django.urls import path, include  # Make sure `include` is imported
+from . import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('queryapp/', include('queryapp.urls')),  # This should now include the app's urls.py
+    path('', views.home_page, name='HomePAge'),
+    path('queryapp/', include('queryapp.urls')), 
+    path('login/', views.custom_login, name='login'),
+    path('logout/', views.custom_logout, name='logout'),
+    path('register/', views.register, name='register'),
 ]
