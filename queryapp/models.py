@@ -1,30 +1,26 @@
-# queryapp/models.py
 from django.db import models
+from django.contrib.auth.models import User
+from django.utils import timezone
 
 class SQLQuery(models.Model):
-    yes_no_choices=[
-        (True,'Yes'),
-        (False,'No'),
+    yes_no_choices = [
+        (True, 'Yes'),
+        (False, 'No'),
     ]
-    name = models.CharField(max_length=255)          # Name of the query
-    description = models.TextField(blank=True, null=True)  # Optional description
-    sql_text = models.TextField()                    # SQL query to be executed
-    # Excel_upload = models.BooleanField(choices=yes_no_choices,default=True)
-    # Date_Filter = models.BooleanField(choices=yes_no_choices,default=True)
-    # Both_Filter = models.BooleanField(choices=yes_no_choices,default=True)
-    Add_filter=models.BooleanField(choices=yes_no_choices,default=True)
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    sql_text = models.TextField()
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_queries')
+    add_filter = models.BooleanField(choices=[(True, 'Yes'), (False, 'No')], default=True)
+    created_at = models.DateTimeField(auto_now_add=True)  # Add a timestamp for creation
+    
     def __str__(self):
         return self.name
 
+class UserQueryAccess(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    query = models.ForeignKey(SQLQuery, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)  # Add auto_now_add
 
-# class Employee(models.Model):
-#     name = models.CharField(max_length=100)
-#     position = models.CharField(max_length=100)
-#     office = models.CharField(max_length=100)
-#     age = models.IntegerField()
-#     start_date = models.DateField()
-#     salary = models.CharField(max_length=20)
-#     extra_info = models.TextField()
-
-#     def __str__(self):
-#         return self.name
+    def __str__(self):
+        return f"{self.user.username} - {self.query.name}"
