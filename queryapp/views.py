@@ -3,7 +3,7 @@ import pandas as pd
 from django.http import JsonResponse, HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-from .models import SQLQuery
+from .models import SQLQuery , UserQueryAccess
 import cx_Oracle
 from django.shortcuts import render,redirect
 from django.db import connection
@@ -17,12 +17,20 @@ import os
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 
-
 @login_required
 @permission_required('queryapp.view_sqlquery', raise_exception=True)
 def query_list(request):
-    queries = SQLQuery.objects.all()
+    print('enter')
+    if request.user.is_superuser:
+        queries = SQLQuery.objects.all()
+        print('admin run nnnnnn')
+    else:
+        assigned_queries = UserQueryAccess.objects.filter(user=request.user).values_list('query_id', flat=True)
+        print(f"Assigned Queries for {request.user.username}: {list(assigned_queries)}")  # Debug print
+        queries = SQLQuery.objects.filter(id__in=assigned_queries)
+
     return render(request, 'queryapp/query_list.html', {'queries': queries})
+
 
 @login_required
 @permission_required('queryapp.download_sqlquery', raise_exception=True)
