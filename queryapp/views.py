@@ -20,7 +20,8 @@ from django.contrib.auth.decorators import login_required, permission_required
 @login_required
 @permission_required('queryapp.view_sqlquery', raise_exception=True)
 def query_list(request):
-    print('enter')
+    # print(queries.values('id', 'name', 'Add_filter'))  
+    # print('enter')
     if request.user.is_superuser:
         queries = SQLQuery.objects.all()
         print('admin run nnnnnn')

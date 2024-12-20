@@ -11,7 +11,7 @@ class SQLQuery(models.Model):
     description = models.TextField(blank=True, null=True)
     sql_text = models.TextField()
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_queries')
-    add_filter = models.BooleanField(choices=[(True, 'Yes'), (False, 'No')], default=True)
+    Add_filter = models.BooleanField(choices=[(True, 'Yes'), (False, 'No')], default=True)
     created_at = models.DateTimeField(auto_now_add=True)  # Add a timestamp for creation
     
     def __str__(self):

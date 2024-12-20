@@ -52,22 +52,21 @@
      </tr>
  </thead>
  <tbody>
-     {% for query in queries %}
-     <tr>
-         <td>{{ query.name }}</td>
-         <td>
-             {% if query.Add_filter %}
-             <!-- Add Filters Button -->
-             <button class="btn btn-primary" data-toggle="modal" data-target="#formatdownloadModal" data-query-id="{{ query.id }}">Add Filters</button>
-             {% else %}
-             <!-- Download Button -->
-             <button class="btn btn-primary" onclick="openDownloadModal('{{ query.id }}')" > Download </button>
-             {% endif %}
-         </td>
-     </tr>
-     {% empty %}
-     <tr><td colspan="2">No queries available for download.</td></tr>
-     {% endfor %}
+    {% for query in queries %}
+    <tr>
+        <td>{{ query.name }}</td>
+        <td>
+            {% if query.Add_filter %}
+            <button class="btn btn-primary" data-toggle="modal" data-target="#formatdownloadModal" data-query-id="{{ query.id }}">Add Filters</button>
+            {% else %}
+            <button class="btn btn-primary" onclick="openDownloadModal('{{ query.id }}')" > Download </button>
+            {% endif %}
+        </td>
+    </tr>
+{% empty %}
+<tr><td colspan="2">No queries available for download.</td></tr>
+{% endfor %}
+
  </tbody>
 </table>
 </div>
