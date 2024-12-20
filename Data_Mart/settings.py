@@ -53,6 +53,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'queryapp.middleware.AutoLogoutMiddleware',  # Add this to the end of the list
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
@@ -133,3 +134,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 STATICFILES_DIRS = [
     BASE_DIR ,"static"
 ]
+
+
+# Session timeout duration (in seconds)
+SESSION_COOKIE_AGE = 60  # 60 seconds (for testing)
+
+
+# Optional settings
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # Expire session when the browser is closed
+SESSION_SAVE_EVERY_REQUEST = True  # Reset the timer on each request
