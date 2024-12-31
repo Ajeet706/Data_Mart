@@ -24,3 +24,8 @@ class UserQueryAccess(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.query.name}"
+    
+    class Meta:
+        permissions = [
+            ("download_sqlquery","Can download SQL Query result" ),
+        ]

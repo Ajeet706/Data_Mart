@@ -6,6 +6,25 @@ from django.contrib.auth import authenticate, login
 from .forms import CustomUserCreationForm 
 from django.contrib import messages
 from django.contrib.auth.models import User
+import requests
+import pandas as pd
+from django.http import JsonResponse, HttpResponse
+from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404
+import cx_Oracle
+from django.db import connection
+from django.views.decorators.csrf import csrf_exempt
+import tempfile
+import openpyxl
+from openpyxl import load_workbook
+from openpyxl.styles import Font
+from io import BytesIO
+import os
+import streamlit as st
+import plotly.express as px
+import warnings
+warnings.filterwarnings('ignore')
+
 
 def home_page(request):
     users = User.objects.all()  # Fetch all users

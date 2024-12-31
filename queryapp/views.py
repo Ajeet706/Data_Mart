@@ -5,6 +5,8 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from .models import SQLQuery , UserQueryAccess
 import cx_Oracle
+import csv
+from django.http import StreamingHttpResponse
 from django.shortcuts import render,redirect
 from django.db import connection
 from django.views.decorators.csrf import csrf_exempt
@@ -16,6 +18,17 @@ from io import BytesIO
 import os
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
+import streamlit as st
+import plotly.express as px
+import warnings
+warnings.filterwarnings('ignore')
+
+class Echo:
+    """An object that implements just the write method of a file-like object."""
+    def write(self, value):
+        """Write the value by returning it, instead of storing in memory."""
+        return value
+    
 
 @login_required
 @permission_required('queryapp.view_sqlquery', raise_exception=True)
@@ -24,7 +37,6 @@ def query_list(request):
     # print('enter')
     if request.user.is_superuser:
         queries = SQLQuery.objects.all()
-        print('admin run nnnnnn')
     else:
         assigned_queries = UserQueryAccess.objects.filter(user=request.user).values_list('query_id', flat=True)
         print(f"Assigned Queries for {request.user.username}: {list(assigned_queries)}")  # Debug print
@@ -43,21 +55,56 @@ def execute_query_and_download(request, query_id):
     if not sql_query:
         return HttpResponse("Query not found",status=404)
     else:
-        # Execute the raw SQL query
-        with connection.cursor() as cursor:
-            cursor.execute(sql_query.sql_text)
-            columns = [col[0] for col in cursor.description]  # Column names
-            data = cursor.fetchall()  # All rows
+         # Generator to stream rows
+        def stream_rows():
+            with connection.cursor() as cursor:
+                cursor.execute(sql_query.sql_text)
+                columns = [col[0] for col in cursor.description]  # Column names
 
-        # Create a DataFrame and convert it to an Excel file
-        df = pd.DataFrame(data, columns=columns)
+                # Yield header row first
+                yield columns
 
-        # Set up the HttpResponse to serve the Excel file
-        response = HttpResponse(content_type='application/vnd.ms-excel')
-        response['Content-Disposition'] = f'attachment; filename="{sql_query.name}.xlsx"'
-        df.to_excel(response, index=False)  # Export DataFrame to Excel in the response
+                while True:
+                    rows = cursor.fetchmany(10000)  # Fetch 10,000 rows at a time
+                    if not rows:
+                        break
+                    for row in rows:
+                        yield row
 
-    return response
+        # Streaming CSV generator
+        def csv_stream():
+            pseudo_buffer = Echo()
+            writer = csv.writer(pseudo_buffer)
+            # Write rows to CSV
+            for row in stream_rows():
+                yield writer.writerow(row)
+
+        # Set up the streaming response
+        response = StreamingHttpResponse(
+            csv_stream(),
+            content_type='text/csv',
+        )
+        response['Content-Disposition'] = f'attachment; filename="{sql_query.name}.csv"'
+        return response
+
+        
+    #     # Execute the raw SQL query
+    #     with connection.cursor() as cursor:
+    #         cursor.execute(sql_query.sql_text)
+    #         columns = [col[0] for col in cursor.description]  # Column names
+            
+            
+    #         data = cursor.fetchall()  # All rows
+
+    #     # Create a DataFrame and convert it to an Excel file
+    #     df = pd.DataFrame(data, columns=columns)
+
+    #     # Set up the HttpResponse to serve the Excel file
+    #     response = HttpResponse(content_type='application/vnd.ms-excel')
+    #     response['Content-Disposition'] = f'attachment; filename="{sql_query.name}.xlsx"'
+    #     df.to_excel(response, index=False)  # Export DataFrame to Excel in the response
+
+    # return response
 
 def download_excel(request):
     # Create a new workbook and select the active worksheet
@@ -164,4 +211,10 @@ def view_page(request):
     with connection.cursor() as cursor:
         cursor.execute("SELECT name, position, office, age, start_date, salary, extra FROM employe_01")
         employees = cursor.fetchall()  # Fetches all rows
-    return render(request, 'queryapp/test.html', {'employees': employees})
+    return render(request, 'queryapp/view_page.html', {'employees': employees})
+
+
+
+
+
+
